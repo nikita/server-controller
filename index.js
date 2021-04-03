@@ -4,6 +4,7 @@ const Discord = require("discord.js");
 const client = new Discord.Client();
 const ec2 = new (require("@aws-sdk/client-ec2").EC2)();
 const users = require("./users.json");
+const { getStats, logAction } = require("./db");
 
 client.on("ready", () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -27,7 +28,33 @@ client.on("message", async (msg) => {
 
   const user = users.find((user) => user.discordId === msg.author.id);
 
-  if (command === "status") {
+  if (command === "stats") {
+    let embed = new Discord.MessageEmbed()
+      .setTitle("Stats")
+      .setDescription("Monthly usage stats per user");
+
+    const stats = Object.entries(await getStats());
+
+    if (stats.length) {
+      for (const [key, value] of stats) {
+        embed.addField(
+          (await client.users.fetch(key)).username,
+          `${(value.currentMonthUsage / 60).toFixed(
+            2
+          )} hours or ${value.currentMonthUsage.toFixed(2)} minutes`,
+          true
+        );
+      }
+    } else {
+      embed.addField(
+        "?",
+        "No stats for this month yet, check back later",
+        true
+      );
+    }
+
+    return msg.channel.send(embed);
+  } else if (command === "status") {
     let embed = new Discord.MessageEmbed().setTitle("Status");
 
     for (let i = 0; i < user.instances.length; i++) {
@@ -42,6 +69,7 @@ client.on("message", async (msg) => {
           .addField("Instance Id", i)
           .addField("Instance Type", instance.InstanceType)
           .addField("Platform", instance.Platform)
+          .addField("Region", instance.Placement.AvailabilityZone)
           .addField("Public IP Address", instance.PublicIpAddress)
           .addField("State", instance.State.Name);
 
@@ -58,6 +86,10 @@ client.on("message", async (msg) => {
       InstanceIds: [user.instances[args[0]]],
     });
 
+    // Make sure we don't mess with already running instances
+    if (response.StartingInstances[0].CurrentState.Name !== "running")
+      await logAction("start", user.discordId, user.instances[args[0]]);
+
     return msg.channel.send(
       new Discord.MessageEmbed()
         .setTitle(`Successfully started instance id ${args[0]}`)
@@ -73,6 +105,8 @@ client.on("message", async (msg) => {
     const response = await ec2.stopInstances({
       InstanceIds: [user.instances[args[0]]],
     });
+
+    await logAction("stop", user.discordId, user.instances[args[0]]);
 
     return msg.channel.send(
       new Discord.MessageEmbed()

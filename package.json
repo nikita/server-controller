@@ -1,6 +1,6 @@
 {
   "name": "server-controller",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,8 @@
   "dependencies": {
     "@aws-sdk/client-ec2": "^3.11.0",
     "discord.js": "^12.5.3",
-    "dotenv": "^8.2.0"
+    "dotenv": "^8.2.0",
+    "moment": "^2.29.1",
+    "picodb": "^1.0.1"
   }
 }
