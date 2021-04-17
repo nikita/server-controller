@@ -41,7 +41,9 @@ client.on("message", async (msg) => {
           (await client.users.fetch(key)).username,
           `${(value.currentMonthUsage / 60).toFixed(
             2
-          )} hours or ${value.currentMonthUsage.toFixed(2)} minutes`,
+          )} hours or ${value.currentMonthUsage.toFixed(2)} minutes | started ${
+            value.times
+          } times`,
           true
         );
       }

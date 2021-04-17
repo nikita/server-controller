@@ -46,12 +46,15 @@ const getStats = async () => {
     const diffTime = moment(stat.stopTime).diff(moment(stat.startTime));
     const duration = moment.duration(diffTime);
 
-    if (!usage[stat.userId]) usage[stat.userId] = { currentMonthUsage: 0 };
+    if (!usage[stat.userId])
+      usage[stat.userId] = { currentMonthUsage: 0, times: 0 };
 
     // Only show this month usage
     if (moment(stat.startTime).isAfter(moment().startOf("month").toDate())) {
       usage[stat.userId].currentMonthUsage =
         usage[stat.userId].currentMonthUsage + duration.asMinutes();
+
+      usage[stat.userId].times++;
     }
   }
 
